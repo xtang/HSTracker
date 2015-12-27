@@ -1,0 +1,20 @@
+#
+# You can add personal rules in your file .git/info/exclude
+*.swp
+*.pyc
+*~
+\#*#
+.#*
+/*.cache
+/deps/
+/ebin/
+/_rel/
+/log
+/.rebar
+/_build
+/.eunit
+/test/*.beam
+gen-erl
+gen-java
+rebar.lock
+erl_crash.dump
