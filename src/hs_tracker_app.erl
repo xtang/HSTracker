@@ -115,15 +115,26 @@ get_hero(<<"CardID=HERO_08a">>) -> <<"Mage">>;
 get_hero(<<"CardID=HERO_09">>) -> <<"Priest">>;
 get_hero(<<"CardID=HERO_09a">>) -> <<"Priest">>.
 
+parse_time(T) ->
+    [H, M, Sm] = binary:split(T, [<<":">>], [global]),
+    [S, Ms] = binary:split(Sm, [<<".">>], [global]),
+    lists:map(fun(B) -> binary_to_integer(B) end, [H, M, S]).
+
+time_diff(T1, T2) ->
+    [H1, M1, S1] = parse_time(T1),
+    [H2, M2, S2] = parse_time(T2),
+    {Day, {H3, M3, S3}} = calendar:time_difference({{1970,1,1},{H1,M1,S1}}, {{1970,1,1},{H2,M2,S2}}),
+    lists:flatten(io_lib:format("~2..0b:~2..0b:~2..0b", [H3,M3,S3])).
+
 print_result([], Win, Total) ->
-    io:format("~p/~p, Winrate: ~p\n", [Win, Total, Win/Total]),
+    io:format("~p/~p, Winrate: ~p~n", [Win, Total, Win/Total]),
     ok;
 print_result([Game|Rest], Win, Total) ->
     [Me, Op] = case (Game#game.player1)#player.name of
                    ?MY_USERNAME -> [Game#game.player1, Game#game.player2];
                    _ELSE -> [Game#game.player2, Game#game.player1]
                end,
-    io:format("~p - ~p: ~p\n", [get_hero(Me#player.hero), get_hero(Op#player.hero), Me#player.result]),
+    io:format("~p\t~p\t~p\t~p~n", [binary_to_list(get_hero(Me#player.hero)), binary_to_list(get_hero(Op#player.hero)), binary_to_list(Me#player.result), time_diff(Game#game.start_ts, Game#game.end_ts)]),
     Win1 = case Me#player.result of
                <<"WON">> -> Win + 1;
                _ -> Win
@@ -137,7 +148,8 @@ my_time() ->
 parser() ->
     Data = readlines(?LOG_PATH),
     Games = start_parse(Data, []),
-    io:format("~p\n", [my_time()]),
+    io:format("~p~n", [Games]),
+    io:format("~p~n", [my_time()]),
     print_result(Games, 0, 0).
 
 start(_StartType, _StartArgs) ->
